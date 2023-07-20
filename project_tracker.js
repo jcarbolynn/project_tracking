@@ -14,6 +14,7 @@ function projectTracker() {
   for (let row = 0; row < data.length; row++){
     // selecting rows with series and date information
     if (data[row]["series"] != ""){
+      dates = [];
       series = data[row]["series"];
 
       // going through columns for months 1-24
@@ -23,21 +24,15 @@ function projectTracker() {
         month = col + " mo";
         // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
         if (data[row][month] != ""){
-          one_date = [];
-          one_date[month] = data[row][month];
+          dates[month] = data[row][month];
 
-          dates.push(one_date);
+          // one_date = [];
+          // one_date[month] = data[row][month];
+          // dates.push(one_date);
+          // dates.push(data[row][month]);
         }
       }
-      // after going through all columns, clear dates object so it can be used for next series row
-      // dates = []; // this works but wrong spot
-      // for (const month in dates){
-      //   dates[month] = null;
-      // }
-      // Object.keys(dates).forEach(month => {
-      //   delete dates[month];
-      // })
-    }
+    } // checking for series if
 
     // after series and dates in the row have been added to variables, use the info
     if (data[row]["project"] != ""){
@@ -49,19 +44,17 @@ function projectTracker() {
       for (let col = 0; col < 25; col++){ 
         month = col + " mo";
         // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
-        console.log(`series: ${data[row]["series"]} month: ${data[row][month]}`);
+        // console.log(`series: ${data[row]["series"]} month: ${data[row][month]}`);
         if (data[row][month] == "x"){
           // nice still has access to dates here
-          console.log(dates);
+          data[row][month] = dates[month];
         }
-
-
       }
-    }
+    } // checking for project if
 
-    // clear dates object for next row?
-    // dates = [];
-  }
+  } // rows for loop
+
+  console.log(data);
 
 }
 
