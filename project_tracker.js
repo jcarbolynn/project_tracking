@@ -13,9 +13,11 @@ function projectTracker() {
   // goes through rows
   for (let row = 0; row < data.length; row++){
     // selecting rows with series and date information
-    if (data[row]["series"] != ""){
+    if (data[row]['series'] != ""){
       dates = [];
-      series = data[row]["series"];
+      series = data[row]['series'];
+      client = data[row]['client'];
+      product_type = data[row]['product type'];
 
       // going through columns for months 1-24
       // if there is a date in the row add it to a variable to use for selecting a column
@@ -35,8 +37,10 @@ function projectTracker() {
     } // checking for series if
 
     // after series and dates in the row have been added to variables, use the info
-    if (data[row]["project"] != ""){
-      data[row].series = series;
+    if (data[row]['project'] != ""){
+      data[row]['series'] = series;
+      data[row]['client'] = client;
+      data[row]['product type'] = product_type;
 
       // in this part use the variables to assign the date to the corresponding month
       // if column has an x in 1 mo, add date from above
@@ -45,7 +49,7 @@ function projectTracker() {
         month = col + " mo";
         // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
         // console.log(`series: ${data[row]["series"]} month: ${data[row][month]}`);
-        if (data[row][month] == "x"){
+        if (data[row][month] == "x" | data[row][month] == "X"){
           // nice still has access to dates here
           data[row][month] = dates[month];
         }
@@ -54,7 +58,44 @@ function projectTracker() {
 
   } // rows for loop
 
-  console.log(data);
+  const now = new Date();
+  const MILLS_PER_DAY = 1000 * 60 * 60 * 24;
+  var plus_two_weeks = new Date(now.getTime() + 13*MILLS_PER_DAY);
+  var plus_month = new Date(now.getTime() + 30*MILLS_PER_DAY);
+
+  var two_remind = [];
+  var month_remind = [];
+
+  // one column for due dates
+  for (let row = 0; row < data.length; row++){
+    for (key of Object.keys(data[row])){
+      if (data[row][key] instanceof Date){
+        data[row]['due'] = data[row][key];
+      }
+    }
+  }
+
+  for (let row = 0; row < data.length; row++){
+    if (data[row]['due'] <= plus_two_weeks){
+      two_remind.push(data[row]);
+    }
+    if (data[row]['due'] <= plus_month){
+      month_remind.push(data[row]);
+    }
+  }
+
+  console.log(data[19], data[20], data[21]);
+  console.log(two_remind);
+
+  console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
+  for (let row = 0; row < two_remind.length; row++){
+    console.log(two_remind[row]['project'], two_remind[row]['due'], two_remind[row]['product type']);
+  }
+
+  console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
+  for (let row = 0; row < month_remind.length; row++){
+    console.log(month_remind[row]['project'], month_remind[row]['due']);
+  }
 
 }
 
@@ -62,7 +103,7 @@ function projectTracker() {
 function getData(project_data){
   var dataArray = [];
   // collecting data from 2nd Row , 1st column to last row and last    // column sheet.getLastRow()-1
-  var rows = project_data.getRange(3,1,project_data.getLastRow()-1, project_data.getLastColumn()).getValues();
+  var rows = project_data.getRange(3,1,project_data.getLastRow()-2, project_data.getLastColumn()).getValues();
 
   for(var i = 0, l= rows.length; i<l ; i++){
     var dataRow = rows[i];
