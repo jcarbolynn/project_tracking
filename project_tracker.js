@@ -49,8 +49,9 @@ function projectTracker() {
         month = col + " mo";
         // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
         // console.log(`series: ${data[row]["series"]} month: ${data[row][month]}`);
-        if (data[row][month] == "x" | data[row][month] == "X"){
+        if (data[row][month] == "x" || data[row][month] == "X"){
           // nice still has access to dates here
+          // console.log(`this x (${data[row][month]}) is replaced by a date (${dates[month]})`);
           data[row][month] = dates[month];
         }
       }
@@ -66,11 +67,15 @@ function projectTracker() {
   var two_remind = [];
   var month_remind = [];
 
-  // one column for due dates
+  // one column for due dates, UPDATE: only if data[row]['project'] has a value (to exclude the row with series and date information)
   for (let row = 0; row < data.length; row++){
-    for (key of Object.keys(data[row])){
-      if (data[row][key] instanceof Date){
-        data[row]['due'] = data[row][key];
+    if (data[row]['project'] != ""){
+      // console.log(`dates to add to due column: ${Object.keys(data[row])}`);
+      for (key of Object.keys(data[row])){
+        if (data[row][key] instanceof Date){
+          data[row]['due'] = data[row][key];
+          // console.log(`this date ${data[row][key]} is added to due date column`)
+        }
       }
     }
   }
@@ -84,19 +89,51 @@ function projectTracker() {
     }
   }
 
-  console.log(data[19], data[20], data[21]);
-  console.log(two_remind);
+  // console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
+  // for (let row = 0; row < two_remind.length; row++){
+  //   console.log(two_remind[row]['project'], two_remind[row]['due'], two_remind[row]['product type']);
+  // }
 
-  console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
-  for (let row = 0; row < two_remind.length; row++){
-    console.log(two_remind[row]['project'], two_remind[row]['due'], two_remind[row]['product type']);
+  // console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
+  // for (let row = 0; row < month_remind.length; row++){
+  //   console.log(month_remind[row]['project'], month_remind[row]['due']);
+  // }
+
+
+  var reminders = [];
+  reminders["Two Week"] = two_remind
+  reminders["Month"] = month_remind;
+
+  for (r of Object.keys(reminders)){
+    console.log(r);
+    console.log(reminders[r]);
+    if (reminders[r].length != 0){
+      MailApp.sendEmail({to: "EMAIL",
+                          subject: `TOX-011 Project ${r} Reminders`,
+                          htmlBody: printStuff(reminders[r]),
+                          noReply:true});
+    }
+    else{
+      MailApp.sendEmail({to: "EMAIL",
+                          subject: `No TOX-011 Projects in the next ${r}`,
+                          htmlBody: "",
+                          noReply:true});
+    }
   }
+}
 
-  console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
-  for (let row = 0; row < month_remind.length; row++){
-    console.log(month_remind[row]['project'], month_remind[row]['due']);
+function printStuff(reminders){
+  string = "<html><body><br><table border=1><tr><th>Series</th><th>Project</th><th>Client</th><th>Product Type</th><th>Date</th></tr></br>";
+  for (var i=0; i<reminders.length; i++){
+    string = string + "<tr>";
+
+    temp = `<td> ${reminders[i]['series']} </td><td> ${reminders[i]['project']}  </td><td> ${reminders[i]['client']} </td><td> ${reminders[i]['product type']}</td><td> ${Utilities.formatDate(reminders[i]['due'], 'America/New_York', 'MMMM dd, yyyy')}</td>`;
+
+    string = string.concat(temp);
+    string = string + "</tr>";
   }
-
+  string = string + "</table></body></html>";
+  return string;
 }
 
 // https://blog.devgenius.io/send-mass-emails-using-google-apps-script-from-a-google-spreadsheet-fc2f79c9febd
