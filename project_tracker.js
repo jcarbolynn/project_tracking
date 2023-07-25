@@ -1,5 +1,5 @@
 var SpreadSheetID = "1cQAmwN-naQHs4BkgDM0Pu8DXxT3cVonDW-R7d1eMKNY"
-var SheetName = "Copy of Time Point/Stability"
+var SheetName = "Time Point/Stability"
 
 
 function projectTracker() {
@@ -61,8 +61,8 @@ function projectTracker() {
 
   const now = new Date();
   const MILLS_PER_DAY = 1000 * 60 * 60 * 24;
-  var plus_two_weeks = new Date(now.getTime() + 13*MILLS_PER_DAY);
-  var plus_month = new Date(now.getTime() + 30*MILLS_PER_DAY);
+  var plus_two_weeks = new Date(now.getTime() + 15*MILLS_PER_DAY);
+  var plus_month = new Date(now.getTime() + 40*MILLS_PER_DAY);
 
   var two_remind = [];
   var month_remind = [];
@@ -70,12 +70,27 @@ function projectTracker() {
   // one column for due dates, UPDATE: only if data[row]['project'] has a value (to exclude the row with series and date information)
   for (let row = 0; row < data.length; row++){
     if (data[row]['project'] != ""){
+      var num_dates = 0;
       // console.log(`dates to add to due column: ${Object.keys(data[row])}`);
       for (key of Object.keys(data[row])){
-        if (data[row][key] instanceof Date){
-          data[row]['due'] = data[row][key];
-          // console.log(`this date ${data[row][key]} is added to due date column`)
-        }
+
+        data[row]['due'] = data[row][key];
+
+// CONFUSING PART HERE: 
+        // // console.log(key);
+        // if (data[row][key] instanceof Date){
+        //   num_dates += 1;
+        // }
+
+        // if (num_dates > 1){
+        //   //duplicate row and add each date to due column....somehow.....
+        //   // console.log(data[row][key]);
+        //   // console.log(`this date ${data[row][key]} is added to due date column`)
+        // }
+
+        // else{
+        //   data[row]['due'] = data[row][key];
+        // }
       }
     }
   }
@@ -99,27 +114,27 @@ function projectTracker() {
   //   console.log(month_remind[row]['project'], month_remind[row]['due']);
   // }
 
-
+  // email part
   var reminders = [];
   reminders["Two Week"] = two_remind
   reminders["Month"] = month_remind;
-
   for (r of Object.keys(reminders)){
-    console.log(r);
-    console.log(reminders[r]);
     if (reminders[r].length != 0){
       MailApp.sendEmail({to: "EMAIL",
                           subject: `TOX-011 Project ${r} Reminders`,
                           htmlBody: printStuff(reminders[r]),
                           noReply:true});
+
     }
     else{
       MailApp.sendEmail({to: "EMAIL",
                           subject: `No TOX-011 Projects in the next ${r}`,
                           htmlBody: "",
                           noReply:true});
+
     }
   }
+
 }
 
 function printStuff(reminders){
