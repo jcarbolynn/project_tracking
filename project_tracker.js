@@ -1,6 +1,6 @@
 var SpreadSheetID = "1cQAmwN-naQHs4BkgDM0Pu8DXxT3cVonDW-R7d1eMKNY"
 var SheetName = "Time Point/Stability"
-
+var EmailSheet = "emails"
 
 function projectTracker() {
   var ss = SpreadsheetApp.openById(SpreadSheetID);
@@ -27,11 +27,6 @@ function projectTracker() {
         // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
         if (data[row][month] != ""){
           dates[month] = data[row][month];
-
-          // one_date = [];
-          // one_date[month] = data[row][month];
-          // dates.push(one_date);
-          // dates.push(data[row][month]);
         }
       }
     } // checking for series if
@@ -56,7 +51,6 @@ function projectTracker() {
         }
       }
     } // checking for project if
-
   } // rows for loop
 
   const now = new Date();
@@ -73,8 +67,9 @@ function projectTracker() {
       var num_dates = 0;
       // console.log(`dates to add to due column: ${Object.keys(data[row])}`);
       for (key of Object.keys(data[row])){
-
-        data[row]['due'] = data[row][key];
+        if (data[row][key] instanceof Date){
+          data[row]['due'] = data[row][key];
+        }
 
 // CONFUSING PART HERE: 
         // // console.log(key);
@@ -115,22 +110,28 @@ function projectTracker() {
   // }
 
   // email part
+  var emailInfo = ss.getSheetByName(EmailSheet);
+  var emails = getEmails(emailInfo);
+
   var reminders = [];
   reminders["Two Week"] = two_remind
   reminders["Month"] = month_remind;
   for (r of Object.keys(reminders)){
     if (reminders[r].length != 0){
-      MailApp.sendEmail({to: "EMAIL",
+      for (var j=0; j<emails.length; j++){
+        MailApp.sendEmail({to: emails[j].email,
                           subject: `TOX-011 Project ${r} Reminders`,
                           htmlBody: printStuff(reminders[r]),
-                          noReply:true});
-
+                          noReply:true})
+      }
     }
     else{
-      MailApp.sendEmail({to: "EMAIL",
-                          subject: `No TOX-011 Projects in the next ${r}`,
-                          htmlBody: "",
-                          noReply:true});
+      for (var j=0; j<emails.length; j++){
+        MailApp.sendEmail({to: emails[j].email,
+                            subject: `No TOX-011 Projects in the next ${r}(s)`,
+                            htmlBody: "",
+                            noReply:true})
+      }
 
     }
   }
@@ -190,6 +191,19 @@ function getData(project_data){
     record['23 mo'] = dataRow[29];
     record['24 mo'] = dataRow[30];
 
+    dataArray.push(record);
+  }
+  return dataArray;
+}
+
+function getEmails(email_sheet){
+  var dataArray = [];
+  // collecting data from 2nd Row , 1st column to last row and last    // column sheet.getLastRow()-1
+  var rows = email_sheet.getRange(2,1,email_sheet.getLastRow()-1, email_sheet.getLastColumn()).getValues();
+  for(var i = 0, l= rows.length; i<l ; i++){
+    var dataRow = rows[i];
+    var record = {};
+    record['email'] = dataRow[0];
     dataArray.push(record);
   }
   return dataArray;
