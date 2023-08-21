@@ -71,7 +71,7 @@ function projectTracker() {
           data[row]['due'] = data[row][key];
         }
 
-// CONFUSING PART HERE: 
+// CONFUSING PART HERE: to make it work even if there are x's on the same row 
         // // console.log(key);
         // if (data[row][key] instanceof Date){
         //   num_dates += 1;
@@ -139,11 +139,11 @@ function projectTracker() {
 }
 
 function printStuff(reminders){
-  string = "<html><body><br><table border=1><tr><th>Series</th><th>Project</th><th>Client</th><th>Product Type</th><th>Date</th></tr></br>";
+  string = "<html><body><br><table border=1><tr><th>Series</th><th>Project</th><th>Set</th><th>Client</th><th>Product Type</th><th>Date</th></tr></br>";
   for (var i=0; i<reminders.length; i++){
     string = string + "<tr>";
 
-    temp = `<td> ${reminders[i]['series']} </td><td> ${reminders[i]['project']}  </td><td> ${reminders[i]['client']} </td><td> ${reminders[i]['product type']}</td><td> ${Utilities.formatDate(reminders[i]['due'], 'America/New_York', 'MMMM dd, yyyy')}</td>`;
+    temp = `<td> ${reminders[i]['series']} </td><td> ${reminders[i]['project']}  </td><td> ${reminders[i]['set']} </td><td> ${reminders[i]['client']} </td><td> ${reminders[i]['product type']}</td><td> ${Utilities.formatDate(reminders[i]['due'], 'America/New_York', 'MMMM dd, yyyy')}</td>`;
 
     string = string.concat(temp);
     string = string + "</tr>";
@@ -163,6 +163,7 @@ function getData(project_data){
     var record = {};
     record['series'] = dataRow[0];
     record['project'] = dataRow[1];
+    record['set'] = dataRow[2];
     record['client'] = dataRow[3];
     record['product type'] = dataRow[4];
     record['0 mo'] = dataRow[6];
