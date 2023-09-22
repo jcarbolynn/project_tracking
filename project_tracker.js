@@ -1,57 +1,11 @@
-var SpreadSheetID = "1cQAmwN-naQHs4BkgDM0Pu8DXxT3cVonDW-R7d1eMKNY"
-var SheetName = "Time Point/Stability"
-var EmailSheet = "emails"
+var SpreadSheetID = "1JprPNRcr2hiQKyk1xn0OeZJ9KaTgORTMvvVAStB0a2I"
+var SheetName = "Sheet2"
+var EmailSheet = "Sheet3"
 
 function projectTracker() {
   var ss = SpreadsheetApp.openById(SpreadSheetID);
   var time_point = ss.getSheetByName(SheetName);
   var data = getData(time_point)
-
-  var series = "";
-  var dates = [];
-
-  // goes through rows
-  for (let row = 0; row < data.length; row++){
-    // selecting rows with series and date information
-    if (data[row]['series'] != ""){
-      dates = [];
-      series = data[row]['series'];
-      client = data[row]['client'];
-      product_type = data[row]['product type'];
-
-      // going through columns for months 1-24
-      // if there is a date in the row add it to a variable to use for selecting a column
-      // have date for 1 mo, 2 mo...24 mo
-      for (let col = 0; col < 25; col++){
-        month = col + " mo";
-        // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
-        if (data[row][month] != ""){
-          dates[month] = data[row][month];
-        }
-      }
-    } // checking for series if
-
-    // after series and dates in the row have been added to variables, use the info
-    if (data[row]['project'] != ""){
-      data[row]['series'] = series;
-      data[row]['client'] = client;
-      data[row]['product type'] = product_type;
-
-      // in this part use the variables to assign the date to the corresponding month
-      // if column has an x in 1 mo, add date from above
-      // if column has an x in 3 mo, add date from above
-      for (let col = 0; col < 25; col++){ 
-        month = col + " mo";
-        // if there is a date in a month column add the date to an object: [ [month: date], [month: date], [month: date] ]
-        // console.log(`series: ${data[row]["series"]} month: ${data[row][month]}`);
-        if (data[row][month] == "x" || data[row][month] == "X"){
-          // nice still has access to dates here
-          // console.log(`this x (${data[row][month]}) is replaced by a date (${dates[month]})`);
-          data[row][month] = dates[month];
-        }
-      }
-    } // checking for project if
-  } // rows for loop
 
   const now = new Date();
   const MILLS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -63,41 +17,34 @@ function projectTracker() {
 
   // one column for due dates, UPDATE: only if data[row]['project'] has a value (to exclude the row with series and date information)
   for (let row = 0; row < data.length; row++){
+    // console.log(`dates to add to due column: ${Object.keys(data[row])}`);
+    for (key of Object.keys(data[row])){
+      if (data[row][key] instanceof Date){
+        if (data[row][key] <= plus_two_weeks){
+          two_remind.push(data[row]);
+        }
+        if (data[row][key] <= plus_month){
+          month_remind.push(data[row]);
+        }
+      }
+    }
+  }
+
+  // one column for due dates, UPDATE: only if data[row]['project'] has a value (to exclude the row with series and date information)
+  for (let row = 0; row < data.length; row++){
     if (data[row]['project'] != ""){
-      var num_dates = 0;
       // console.log(`dates to add to due column: ${Object.keys(data[row])}`);
       for (key of Object.keys(data[row])){
         if (data[row][key] instanceof Date){
           data[row]['due'] = data[row][key];
         }
-
-// CONFUSING PART HERE: to make it work even if there are x's on the same row 
-        // // console.log(key);
-        // if (data[row][key] instanceof Date){
-        //   num_dates += 1;
-        // }
-
-        // if (num_dates > 1){
-        //   //duplicate row and add each date to due column....somehow.....
-        //   // console.log(data[row][key]);
-        //   // console.log(`this date ${data[row][key]} is added to due date column`)
-        // }
-
-        // else{
-        //   data[row]['due'] = data[row][key];
-        // }
       }
     }
   }
 
-  for (let row = 0; row < data.length; row++){
-    if (data[row]['due'] <= plus_two_weeks){
-      two_remind.push(data[row]);
-    }
-    if (data[row]['due'] <= plus_month){
-      month_remind.push(data[row]);
-    }
-  }
+  // delete duplicates
+  two_remind = removeDuplicates(two_remind);
+  month_remind = removeDuplicates(month_remind);
 
   // console.log(`2 weeks: ${plus_two_weeks} || month: ${plus_month}`);
   // for (let row = 0; row < two_remind.length; row++){
@@ -116,6 +63,7 @@ function projectTracker() {
   var reminders = [];
   reminders["Two Week"] = two_remind
   reminders["Month"] = month_remind;
+
   for (r of Object.keys(reminders)){
     if (reminders[r].length != 0){
       for (var j=0; j<emails.length; j++){
@@ -139,11 +87,11 @@ function projectTracker() {
 }
 
 function printStuff(reminders){
-  string = "<html><body><br><table border=1><tr><th>Series</th><th>Project</th><th>Set</th><th>Client</th><th>Product Type</th><th>Date</th></tr></br>";
+  string = "<html><body><br><table border=1><tr><th>Series</th><th>Project</th><th>Set</th><th>Client</th><th>Product Type</th></tr></br>";
   for (var i=0; i<reminders.length; i++){
     string = string + "<tr>";
 
-    temp = `<td> ${reminders[i]['series']} </td><td> ${reminders[i]['project']}  </td><td> ${reminders[i]['set']} </td><td> ${reminders[i]['client']} </td><td> ${reminders[i]['product type']}</td><td> ${Utilities.formatDate(reminders[i]['due'], 'America/New_York', 'MMMM dd, yyyy')}</td>`;
+    temp = `<td> ${reminders[i]['series']} </td><td> ${reminders[i]['project']}  </td><td> ${reminders[i]['set']} </td><td> ${reminders[i]['client']} </td><td> ${reminders[i]['product type']}</td>`;
 
     string = string.concat(temp);
     string = string + "</tr>";
@@ -208,4 +156,12 @@ function getEmails(email_sheet){
     dataArray.push(record);
   }
   return dataArray;
+}
+
+function removeDuplicates(with_duplicates) {
+  jsonObject = with_duplicates.map(JSON.stringify);
+  uniqueSet = new Set(jsonObject);
+  uniqueArray = Array.from(uniqueSet).map(JSON.parse);
+
+  return uniqueArray;
 }
